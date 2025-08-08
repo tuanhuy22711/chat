@@ -7,8 +7,12 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "*", // Cho phép tất cả domain
-    methods: ["GET", "POST"], // Nên khai báo method được phép
+     origin: [
+      "https://chat-zeta-murex.vercel.app",                 // FE trên Vercel
+      "https://bloggers-secretary-bones-donated.trycloudflare.com",
+      "http://localhost:5173" // Cloudflare Tunnel
+    ],
+    credentials: true,
   },
 });
 
