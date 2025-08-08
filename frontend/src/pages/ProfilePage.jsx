@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
-import { Camera, Mail, User } from "lucide-react";
+import Avatar from "../components/Avatar";
+import AvatarPicker from "../components/AvatarPicker";
+import { Camera, Mail, User, Palette } from "lucide-react";
 
 const ProfilePage = () => {
   const { authUser, isUpdatingProfile, updateProfile } = useAuthStore();
   const [selectedImg, setSelectedImg] = useState(null);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -21,6 +24,12 @@ const ProfilePage = () => {
     };
   };
 
+  const handleAvatarSelect = async (avatarUrl) => {
+    setSelectedImg(avatarUrl);
+    await updateProfile({ profilePic: avatarUrl });
+    setShowAvatarPicker(false);
+  };
+
   return (
     <div className="h-screen pt-20">
       <div className="max-w-2xl mx-auto p-4 py-8">
@@ -34,10 +43,11 @@ const ProfilePage = () => {
 
           <div className="flex flex-col items-center gap-4">
             <div className="relative">
-              <img
-                src={selectedImg || authUser.profilePic || "/avatar.png"}
-                alt="Profile"
-                className="size-32 rounded-full object-cover border-4 "
+              <Avatar 
+                src={selectedImg || authUser.profilePic}
+                name={authUser.fullName}
+                size="size-32"
+                className="border-4"
               />
               <label
                 htmlFor="avatar-upload"
@@ -60,10 +70,29 @@ const ProfilePage = () => {
                 />
               </label>
             </div>
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={() => setShowAvatarPicker(!showAvatarPicker)}
+                className="btn btn-sm btn-outline"
+                type="button"
+              >
+                <Palette size={16} />
+                Choose Avatar
+              </button>
+            </div>
             <p className="text-sm text-zinc-400">
-              {isUpdatingProfile ? "Uploading..." : "Click the camera icon to update your photo"}
+              {isUpdatingProfile ? "Updating..." : "Upload your own photo or choose from our avatars"}
             </p>
           </div>
+
+          {/* Avatar Picker */}
+          {showAvatarPicker && (
+            <AvatarPicker
+              userName={authUser.fullName}
+              onSelect={handleAvatarSelect}
+              currentAvatar={selectedImg || authUser.profilePic}
+            />
+          )}
 
           <div className="space-y-6">
             <div className="space-y-1.5">
