@@ -20,7 +20,11 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "*",
+    origin: [
+      "https://chat-zeta-murex.vercel.app",                 // FE trên Vercel
+      "https://bloggers-secretary-bones-donated.trycloudflare.com" // Cloudflare Tunnel
+    ],
+    credentials: true, // Cho phép gửi cookie/token
   })
 );
 
