@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
+import { createNotification } from "./notification.controller.js";
 
 import cloudinary from "../lib/cloudinary.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
@@ -26,7 +27,7 @@ export const getMessages = async (req, res) => {
         { senderId: myId, receiverId: userToChatId },
         { senderId: userToChatId, receiverId: myId },
       ],
-    });
+    }).populate("senderId", "fullName profilePic");
 
     res.status(200).json(messages);
   } catch (error) {
@@ -53,18 +54,73 @@ export const sendMessage = async (req, res) => {
       receiverId,
       text,
       image: imageUrl,
+      messageType: "private",
     });
 
     await newMessage.save();
 
+    // Populate sender info for consistent data structure
+    const populatedMessage = await Message.findById(newMessage._id).populate("senderId", "fullName profilePic");
+
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("newMessage", newMessage);
+      io.to(receiverSocketId).emit("newMessage", populatedMessage);
     }
 
-    res.status(201).json(newMessage);
+    // Create notification for new message
+    await createNotification({
+      recipient: receiverId,
+      sender: senderId,
+      type: "message",
+      title: "New Message",
+      message: `${req.user.fullName} sent you a message`,
+      data: {
+        messageId: newMessage._id,
+        userId: senderId,
+        conversationType: "direct",
+      },
+    });
+
+    res.status(201).json(populatedMessage);
   } catch (error) {
     console.log("Error in sendMessage controller: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Mark private messages as read
+export const markMessagesAsRead = async (req, res) => {
+  try {
+    const { id: otherUserId } = req.params;
+    const userId = req.user._id;
+
+    // Update messages from other user as read
+    const result = await Message.updateMany(
+      {
+        senderId: otherUserId,
+        receiverId: userId,
+        messageType: "private",
+        status: { $ne: "read" }
+      },
+      {
+        status: "read"
+      }
+    );
+
+    // If messages were updated, notify the sender via socket
+    if (result.modifiedCount > 0) {
+      const senderSocketId = getReceiverSocketId(otherUserId);
+      if (senderSocketId) {
+        io.to(senderSocketId).emit("messagesMarkedAsRead", {
+          conversationWith: userId,
+          readBy: userId
+        });
+      }
+    }
+
+    res.status(200).json({ message: "Messages marked as read" });
+  } catch (error) {
+    console.log("Error in markMessagesAsRead controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };

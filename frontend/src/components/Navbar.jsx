@@ -1,9 +1,13 @@
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
-import { LogOut, MessageSquare, Settings, User } from "lucide-react";
+import { useLanguageStore } from "../store/useLanguageStore";
+import LanguageSelector from "./LanguageSelector";
+import NotificationDropdown from "./NotificationDropdown";
+import { LogOut, MessageSquare, Settings, User, FileText } from "lucide-react";
 
 const Navbar = () => {
   const { logout, authUser } = useAuthStore();
+  const { t } = useLanguageStore();
 
   return (
     <header
@@ -17,11 +21,24 @@ const Navbar = () => {
               <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center">
                 <MessageSquare className="w-5 h-5 text-primary" />
               </div>
-              <h1 className="text-lg font-bold">Chatty</h1>
+              <h1 className="text-lg font-bold">Chat App</h1>
             </Link>
           </div>
 
           <div className="flex items-center gap-2">
+            <LanguageSelector />
+            
+            {/* Notifications */}
+            {authUser && <NotificationDropdown />}
+            
+            <Link
+              to={"/newsfeed"}
+              className="btn btn-sm gap-2 transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              <span className="hidden sm:inline">{t("nav.newsfeed") || "Newsfeed"}</span>
+            </Link>
+            
             <Link
               to={"/settings"}
               className={`
@@ -30,19 +47,19 @@ const Navbar = () => {
               `}
             >
               <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Settings</span>
+              <span className="hidden sm:inline">{t("nav.settings")}</span>
             </Link>
 
             {authUser && (
               <>
                 <Link to={"/profile"} className={`btn btn-sm gap-2`}>
                   <User className="size-5" />
-                  <span className="hidden sm:inline">Profile</span>
+                  <span className="hidden sm:inline">{t("nav.profile")}</span>
                 </Link>
 
                 <button className="flex gap-2 items-center" onClick={logout}>
                   <LogOut className="size-5" />
-                  <span className="hidden sm:inline">Logout</span>
+                  <span className="hidden sm:inline">{t("nav.logout")}</span>
                 </button>
               </>
             )}

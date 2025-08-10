@@ -1,6 +1,7 @@
 import { THEMES } from "../constants";
 import { useThemeStore } from "../store/useThemeStore";
-import { Send } from "lucide-react";
+import { useLanguageStore } from "../store/useLanguageStore";
+import { Send, Globe } from "lucide-react";
 
 const PREVIEW_MESSAGES = [
   { id: 1, content: "Hey! How's it going?", isSent: false },
@@ -9,16 +10,50 @@ const PREVIEW_MESSAGES = [
 
 const SettingsPage = () => {
   const { theme, setTheme } = useThemeStore();
+  const { language, setLanguage, getAvailableLanguages, t } = useLanguageStore();
+  const languages = getAvailableLanguages();
 
   return (
     <div className="h-screen container mx-auto px-4 pt-20 max-w-5xl">
       <div className="space-y-6">
         <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold">Theme</h2>
-          <p className="text-sm text-base-content/70">Choose a theme for your chat interface</p>
+          <h2 className="text-lg font-semibold">{t("settings.title")}</h2>
         </div>
 
-        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+        {/* Language Settings */}
+        <div className="space-y-3">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-md font-semibold flex items-center gap-2">
+              <Globe size={18} />
+              {t("settings.language")}
+            </h3>
+            <p className="text-sm text-base-content/70">Choose your preferred language</p>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            {languages.map((lang) => (
+              <button
+                key={lang.code}
+                className={`
+                  btn btn-sm transition-colors
+                  ${language === lang.code ? "btn-primary" : "btn-outline"}
+                `}
+                onClick={() => setLanguage(lang.code)}
+              >
+                {lang.nativeName}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Theme Settings */}
+        <div className="space-y-3">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-md font-semibold">{t("settings.theme")}</h3>
+            <p className="text-sm text-base-content/70">Choose a theme for your chat interface</p>
+          </div>
+
+          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
           {THEMES.map((t) => (
             <button
               key={t}
@@ -41,10 +76,12 @@ const SettingsPage = () => {
               </span>
             </button>
           ))}
+          </div>
         </div>
 
         {/* Preview Section */}
-        <h3 className="text-lg font-semibold mb-3">Preview</h3>
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold mb-3">Preview</h3>
         <div className="rounded-xl border border-base-300 overflow-hidden bg-base-100 shadow-lg">
           <div className="p-4 bg-base-200">
             <div className="max-w-lg mx-auto">
@@ -108,6 +145,7 @@ const SettingsPage = () => {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

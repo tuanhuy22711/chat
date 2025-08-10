@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { getAvatarOptions, getRandomAvatar } from '../lib/avatarService';
+import { useLanguageStore } from '../store/useLanguageStore';
 import { Shuffle } from 'lucide-react';
 
 const AvatarPicker = ({ userName, onSelect, currentAvatar }) => {
   const [avatarOptions] = useState(() => getAvatarOptions(userName));
   const [selectedAvatar, setSelectedAvatar] = useState(currentAvatar);
+  const { t } = useLanguageStore();
 
   const handleAvatarSelect = (avatarUrl) => {
     setSelectedAvatar(avatarUrl);
@@ -19,14 +21,14 @@ const AvatarPicker = ({ userName, onSelect, currentAvatar }) => {
   return (
     <div className="p-4 bg-base-200 rounded-lg">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">Choose an Avatar</h3>
+        <h3 className="text-lg font-semibold">{t("avatar.chooseAvatar")}</h3>
         <button
           onClick={handleRandomAvatar}
           className="btn btn-sm btn-primary"
           type="button"
         >
           <Shuffle size={16} />
-          Random
+          {t("avatar.random")}
         </button>
       </div>
       
@@ -61,7 +63,7 @@ const AvatarPicker = ({ userName, onSelect, currentAvatar }) => {
       </div>
 
       <div className="mt-4 text-sm text-base-content/70 text-center">
-        Click on an avatar to select it, or generate a random one
+        {t("avatar.clickToSelect")}
       </div>
     </div>
   );

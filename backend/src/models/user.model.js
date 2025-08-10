@@ -20,6 +20,29 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    bio: {
+      type: String,
+      maxlength: 500,
+      default: "",
+    },
+    location: {
+      type: String,
+      maxlength: 100,
+      default: "",
+    },
+    website: {
+      type: String,
+      maxlength: 200,
+      default: "",
+    },
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
+    lastSeen: {
+      type: Date,
+      default: Date.now,
+    },
   },
   { timestamps: true }
 );

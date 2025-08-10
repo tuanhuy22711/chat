@@ -1,8 +1,4 @@
-# ✨ Full Stack Realtime Chat App ✨
-
-![Demo App](/frontend/public/screenshot-for-readme.png)
-
-[Video Tutorial on Youtube](https://youtu.be/ntKkVrQqBYY)
+# ✨ Chat App - Fullstack Realtime Messaging ✨
 
 Highlights:
 
@@ -10,9 +6,11 @@ Highlights:
 - 🎃 Authentication && Authorization with JWT
 - 👾 Real-time messaging with Socket.io
 - 🚀 Online user status
+- 🌐 Multi-language support (English/Vietnamese)
 - 👌 Global state management with Zustand
+- 🎨 Beautiful avatar system with fallbacks
 - 🐞 Error handling both on the server and on the client
-- ⭐ At the end Deployment like a pro for FREE!
+- ⭐ Professional deployment ready
 - ⏳ And much more!
 
 ### Setup .env file

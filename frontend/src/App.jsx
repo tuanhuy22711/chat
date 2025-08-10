@@ -5,6 +5,9 @@ import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
+import UserProfilePage from "./pages/UserProfilePage";
+import NewsfeedPage from "./pages/NewsfeedPage";
+import NotificationsPage from "./pages/NotificationsPage";
 
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./store/useAuthStore";
@@ -43,6 +46,9 @@ const App = () => {
         <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
+        <Route path="/profile/:userId" element={authUser ? <UserProfilePage /> : <Navigate to="/login" />} />
+        <Route path="/newsfeed" element={authUser ? <NewsfeedPage /> : <Navigate to="/login" />} />
+        <Route path="/notifications" element={authUser ? <NotificationsPage /> : <Navigate to="/login" />} />
       </Routes>
 
       <Toaster />
