@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
 import { createNotification } from "./notification.controller.js";
+import { cache, CACHE_KEYS, CACHE_TTL } from "../lib/redis.js";
 
 import cloudinary from "../lib/cloudinary.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
@@ -8,7 +9,22 @@ import { getReceiverSocketId, io } from "../lib/socket.js";
 export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
+    
+    // Try to get from cache first
+    const cacheKey = CACHE_KEYS.USERS_SIDEBAR(loggedInUserId);
+    const cachedUsers = await cache.get(cacheKey);
+    
+    if (cachedUsers) {
+      console.log(`✅ Cache HIT: Users sidebar for ${loggedInUserId}`);
+      return res.status(200).json(cachedUsers);
+    }
+
+    console.log(`❌ Cache MISS: Users sidebar for ${loggedInUserId}`);
+    
     const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select("-password");
+
+    // Cache for 5 minutes
+    await cache.set(cacheKey, filteredUsers, CACHE_TTL.MEDIUM);
 
     res.status(200).json(filteredUsers);
   } catch (error) {
@@ -22,12 +38,26 @@ export const getMessages = async (req, res) => {
     const { id: userToChatId } = req.params;
     const myId = req.user._id;
 
+    // Generate cache key for messages between these two users
+    const cacheKey = CACHE_KEYS.MESSAGES(myId, userToChatId);
+    const cachedMessages = await cache.get(cacheKey);
+    
+    if (cachedMessages) {
+      console.log(`✅ Cache HIT: Messages between ${myId} and ${userToChatId}`);
+      return res.status(200).json(cachedMessages);
+    }
+
+    console.log(`❌ Cache MISS: Messages between ${myId} and ${userToChatId}`);
+
     const messages = await Message.find({
       $or: [
         { senderId: myId, receiverId: userToChatId },
         { senderId: userToChatId, receiverId: myId },
       ],
     }).populate("senderId", "fullName profilePic");
+
+    // Cache messages for 2 minutes (short TTL since messages change frequently)
+    await cache.set(cacheKey, messages, CACHE_TTL.SHORT * 2);
 
     res.status(200).json(messages);
   } catch (error) {
@@ -80,6 +110,13 @@ export const sendMessage = async (req, res) => {
         conversationType: "direct",
       },
     });
+
+    // Invalidate messages cache for both users
+    const messagesCacheKey = CACHE_KEYS.MESSAGES(senderId, receiverId);
+    await cache.del(messagesCacheKey);
+    
+    // Invalidate notifications cache for receiver
+    await cache.del(CACHE_KEYS.NOTIFICATIONS(receiverId));
 
     res.status(201).json(populatedMessage);
   } catch (error) {

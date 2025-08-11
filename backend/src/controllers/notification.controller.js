@@ -1,5 +1,6 @@
 import Notification from "../models/notification.model.js";
 import { io, getReceiverSocketId } from "../lib/socket.js";
+import { cache, CACHE_KEYS, CACHE_TTL } from "../lib/redis.js";
 
 // Get user notifications
 export const getNotifications = async (req, res) => {
@@ -8,6 +9,17 @@ export const getNotifications = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
+
+    // Try to get from cache first
+    const cacheKey = `${CACHE_KEYS.NOTIFICATIONS(userId)}:page:${page}`;
+    const cachedData = await cache.get(cacheKey);
+    
+    if (cachedData) {
+      console.log(`✅ Cache HIT: Notifications for user ${userId}, page ${page}`);
+      return res.status(200).json(cachedData);
+    }
+
+    console.log(`❌ Cache MISS: Notifications for user ${userId}, page ${page}`);
 
     const notifications = await Notification.find({ recipient: userId })
       .populate("sender", "fullName profilePic")
@@ -23,12 +35,17 @@ export const getNotifications = async (req, res) => {
       isRead: false,
     });
 
-    res.status(200).json({
+    const result = {
       notifications,
       unreadCount,
       currentPage: page,
       hasMore: notifications.length === limit,
-    });
+    };
+
+    // Cache for 1 minute (notifications change frequently)
+    await cache.set(cacheKey, result, CACHE_TTL.SHORT);
+
+    res.status(200).json(result);
   } catch (error) {
     console.error("Error in getNotifications: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -50,6 +67,9 @@ export const markAsRead = async (req, res) => {
     if (!notification) {
       return res.status(404).json({ error: "Notification not found" });
     }
+
+    // Invalidate notifications cache
+    await cache.clearPattern(`${CACHE_KEYS.NOTIFICATIONS(userId)}:*`);
 
     res.status(200).json(notification);
   } catch (error) {

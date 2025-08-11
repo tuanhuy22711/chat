@@ -6,12 +6,14 @@ import cors from "cors";
 import path from "path";
 
 import { connectDB } from "./lib/db.js";
+import connectRedis from "./lib/redis.js";
 
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import groupRoutes from "./routes/group.route.js";
 import postRoutes from "./routes/post.route.js";
 import notificationRoutes from "./routes/notification.route.js";
+import cacheRoutes from "./routes/cache.route.js";
 import { app, server } from "./lib/socket.js";
 
 dotenv.config();
@@ -39,6 +41,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/groups", groupRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/cache", cacheRoutes);
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
@@ -51,4 +54,5 @@ if (process.env.NODE_ENV === "production") {
 server.listen(PORT, () => {
   console.log("server is running on PORT:" + PORT);
   connectDB();
+  connectRedis();
 });

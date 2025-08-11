@@ -3,6 +3,7 @@ import User from "../models/user.model.js";
 import cloudinary from "../lib/cloudinary.js";
 import { io, getReceiverSocketId } from "../lib/socket.js";
 import { createNotification } from "./notification.controller.js";
+import { cache, CACHE_KEYS, CACHE_TTL } from "../lib/redis.js";
 
 // Get newsfeed posts
 export const getNewsfeed = async (req, res) => {
@@ -11,6 +12,17 @@ export const getNewsfeed = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+
+    // Try to get from cache first
+    const cacheKey = CACHE_KEYS.NEWSFEED(userId, page);
+    const cachedData = await cache.get(cacheKey);
+    
+    if (cachedData) {
+      console.log(`✅ Cache HIT: Newsfeed for user ${userId}, page ${page}`);
+      return res.status(200).json(cachedData);
+    }
+
+    console.log(`❌ Cache MISS: Newsfeed for user ${userId}, page ${page}`);
 
     // Get posts from user and their friends (simplified for now - just public posts)
     const posts = await Post.find({
@@ -28,11 +40,16 @@ export const getNewsfeed = async (req, res) => {
     .skip(skip)
     .limit(limit);
 
-    res.status(200).json({
+    const result = {
       posts,
       currentPage: page,
       hasMore: posts.length === limit
-    });
+    };
+
+    // Cache for 2 minutes (newsfeed changes frequently)
+    await cache.set(cacheKey, result, CACHE_TTL.SHORT * 2);
+
+    res.status(200).json(result);
   } catch (error) {
     console.error("Error in getNewsfeed: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -47,6 +64,17 @@ export const getUserPosts = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+
+    // Try to get from cache first
+    const cacheKey = CACHE_KEYS.USER_POSTS(userId, page);
+    const cachedData = await cache.get(cacheKey);
+    
+    if (cachedData) {
+      console.log(`✅ Cache HIT: User posts for ${userId}, page ${page}`);
+      return res.status(200).json(cachedData);
+    }
+
+    console.log(`❌ Cache MISS: User posts for ${userId}, page ${page}`);
 
     // Get posts from specific user
     const query = { author: userId };
@@ -66,11 +94,16 @@ export const getUserPosts = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    res.status(200).json({
+    const result = {
       posts,
       currentPage: page,
       hasMore: posts.length === limit
-    });
+    };
+
+    // Cache for 5 minutes
+    await cache.set(cacheKey, result, CACHE_TTL.MEDIUM);
+
+    res.status(200).json(result);
   } catch (error) {
     console.error("Error in getUserPosts: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -155,6 +188,10 @@ export const createPost = async (req, res) => {
       
       await Promise.all(notificationPromises);
     }
+
+    // Invalidate cache
+    await cache.clearPattern('newsfeed:*'); // Clear all newsfeed cache
+    await cache.clearPattern(`user:posts:${authorId}:*`); // Clear user's posts cache
 
     res.status(201).json(populatedPost);
   } catch (error) {

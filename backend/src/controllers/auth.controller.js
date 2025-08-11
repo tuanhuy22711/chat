@@ -2,6 +2,7 @@ import { generateToken } from "../lib/utils.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloudinary.js";
+import { cache, CACHE_KEYS, CACHE_TTL } from "../lib/redis.js";
 
 export const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
@@ -110,6 +111,15 @@ export const updateProfile = async (req, res) => {
       { new: true }
     ).select("-password");
 
+    // Invalidate user profile cache
+    await cache.del(CACHE_KEYS.USER_PROFILE(userId));
+    
+    // Also invalidate user posts cache since profile info might be used there
+    await cache.clearPattern(CACHE_KEYS.USER_POSTS(userId, '*'));
+    
+    // Invalidate newsfeed cache for all users since profile info appears in posts
+    await cache.clearPattern('newsfeed:*');
+
     res.status(200).json(updatedUser);
   } catch (error) {
     console.log("error in update profile:", error);
@@ -130,11 +140,25 @@ export const getUserProfile = async (req, res) => {
   try {
     const { userId } = req.params;
     
+    // Try to get from cache first
+    const cacheKey = CACHE_KEYS.USER_PROFILE(userId);
+    const cachedUser = await cache.get(cacheKey);
+    
+    if (cachedUser) {
+      console.log(`✅ Cache HIT: User profile ${userId}`);
+      return res.status(200).json(cachedUser);
+    }
+
+    console.log(`❌ Cache MISS: User profile ${userId}`);
+    
     const user = await User.findById(userId).select("-password");
     
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+    
+    // Cache user profile for 30 minutes
+    await cache.set(cacheKey, user, CACHE_TTL.LONG);
     
     res.status(200).json(user);
   } catch (error) {

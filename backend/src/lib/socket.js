@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import http from "http";
 import express from "express";
+import { cache, CACHE_KEYS, CACHE_TTL } from "./redis.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -27,7 +28,13 @@ io.on("connection", (socket) => {
   console.log("A user connected", socket.id);
 
   const userId = socket.handshake.query.userId;
-  if (userId) userSocketMap[userId] = socket.id;
+  if (userId) {
+    userSocketMap[userId] = socket.id;
+    
+    // Cache online users
+    const onlineUsers = Object.keys(userSocketMap);
+    cache.set(CACHE_KEYS.ONLINE_USERS, onlineUsers, CACHE_TTL.SHORT);
+  }
 
   // io.emit() is used to send events to all the connected clients
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
@@ -47,11 +54,15 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("A user disconnected", socket.id);
     delete userSocketMap[userId];
-    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+    
+    // Update cached online users
+    const onlineUsers = Object.keys(userSocketMap);
+    cache.set(CACHE_KEYS.ONLINE_USERS, onlineUsers, CACHE_TTL.SHORT);
+    
+    io.emit("getOnlineUsers", onlineUsers);
   });
 });
 
-// Helper function to emit to group
 export function emitToGroup(groupId, event, data) {
   io.to(`group_${groupId}`).emit(event, data);
 }
