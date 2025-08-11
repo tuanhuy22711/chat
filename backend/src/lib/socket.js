@@ -11,7 +11,8 @@ const io = new Server(server, {
      origin: [
       "https://chat-zeta-murex.vercel.app",
       "https://bloggers-secretary-bones-donated.trycloudflare.com",
-      "http://localhost:5173" 
+      "http://localhost:5173" ,
+      "https://ambassador-seasons-surrey-age.trycloudflare.com" // Added new origin
     ],
     credentials: true,
   },
@@ -31,6 +32,13 @@ io.on("connection", (socket) => {
   if (userId) {
     userSocketMap[userId] = socket.id;
     
+    // Store user info in socket for easy access
+    socket.userId = userId;
+    socket.userName = socket.handshake.query.userName || "Unknown User";
+    socket.userProfilePic = socket.handshake.query.userProfilePic || "";
+    socket.isInCall = false;
+    socket.pendingCall = false;
+    
     // Cache online users
     const onlineUsers = Object.keys(userSocketMap);
     cache.set(CACHE_KEYS.ONLINE_USERS, onlineUsers, CACHE_TTL.SHORT);
@@ -49,6 +57,106 @@ io.on("connection", (socket) => {
   // Leave group room
   socket.on("leaveGroup", (groupId) => {
     socket.leave(`group_${groupId}`);
+  });
+
+  // WebRTC signaling events
+  socket.on("call:initiate", (data) => {
+    const { targetUserId, callType, callerId } = data;
+    const targetSocketId = getReceiverSocketId(targetUserId);
+    
+    if (targetSocketId) {
+      // Check if target user is already in a call
+      const targetSocket = io.sockets.sockets.get(targetSocketId);
+      if (targetSocket && targetSocket.isInCall) {
+        socket.emit("call:user-busy", { targetUserId });
+        return;
+      }
+      
+      // Send call invitation to target user
+      io.to(targetSocketId).emit("call:incoming", {
+        callerId,
+        targetUserId,
+        callType,
+        callerName: socket.userName || "Unknown User",
+        callerProfilePic: socket.userProfilePic || ""
+      });
+      
+      // Mark both users as in call
+      socket.isInCall = true;
+      if (targetSocket) {
+        targetSocket.pendingCall = true;
+      }
+    } else {
+      socket.emit("call:user-offline", { targetUserId });
+    }
+  });
+
+  socket.on("call:accept", (data) => {
+    const { callerId, targetUserId } = data;
+    const callerSocketId = getReceiverSocketId(callerId);
+    
+    if (callerSocketId) {
+      const callerSocket = io.sockets.sockets.get(callerSocketId);
+      if (callerSocket) {
+        callerSocket.isInCall = true;
+      }
+      
+      socket.isInCall = true;
+      socket.pendingCall = false;
+      
+      io.to(callerSocketId).emit("call:accepted", {
+        targetUserId,
+        targetName: socket.userName || "Unknown User",
+        targetProfilePic: socket.userProfilePic || ""
+      });
+    }
+  });
+
+  socket.on("call:reject", (data) => {
+    const { callerId, targetUserId } = data;
+    const callerSocketId = getReceiverSocketId(callerId);
+    
+    if (callerSocketId) {
+      const callerSocket = io.sockets.sockets.get(callerSocketId);
+      if (callerSocket) {
+        callerSocket.isInCall = false;
+      }
+      
+      io.to(callerSocketId).emit("call:rejected", { targetUserId });
+    }
+    
+    socket.pendingCall = false;
+  });
+
+  socket.on("call:end", (data) => {
+    // Notify all participants that call has ended
+    Object.keys(userSocketMap).forEach((userId) => {
+      const socketId = userSocketMap[userId];
+      const userSocket = io.sockets.sockets.get(socketId);
+      if (userSocket && userSocket.isInCall) {
+        userSocket.isInCall = false;
+        userSocket.pendingCall = false;
+        io.to(socketId).emit("call:ended", {});
+      }
+    });
+    
+    socket.isInCall = false;
+    socket.pendingCall = false;
+  });
+
+  socket.on("webrtc:signal", (data) => {
+    const { signal, target } = data;
+    
+    // Forward WebRTC signaling data to the appropriate peer
+    Object.keys(userSocketMap).forEach((userId) => {
+      if (userId !== socket.userId) {
+        const socketId = userSocketMap[userId];
+        const userSocket = io.sockets.sockets.get(socketId);
+        if (userSocket && userSocket.isInCall) {
+          io.to(socketId).emit("webrtc:signal", { signal });
+        }
+      }
+    });
   });
 
   socket.on("disconnect", () => {

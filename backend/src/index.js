@@ -30,6 +30,7 @@ app.use(
     origin: [
       "https://chat-zeta-murex.vercel.app",                 // FE trên Vercel
       "https://bloggers-secretary-bones-donated.trycloudflare.com",
+      "https://ambassador-seasons-surrey-age.trycloudflare.com",
       "http://localhost:5173" // Cloudflare Tunnel
     ],
     credentials: true, // Cho phép gửi cookie/token
