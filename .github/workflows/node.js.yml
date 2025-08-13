@@ -1,31 +1,123 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+# Fullstack Chat App CI/CD Pipeline
+# This workflow will build, test and deploy the chat application to VPS
 
-name: Node.js CI
+name: Chat App CI/CD
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "main" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "main" ]
+
+env:
+  NODE_VERSION: '20.x'
 
 jobs:
-  build:
-
+  # Test and Build Job
+  test-and-build:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
+    
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+
+    # Backend tests and build
+    - name: Install backend dependencies
+      run: |
+        cd backend
+        npm ci
+
+    - name: Test backend
+      run: |
+        cd backend
+        npm test --if-present
+
+    - name: Build backend
+      run: |
+        cd backend
+        npm run build --if-present
+
+    # Frontend tests and build
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        npm ci
+
+    - name: Test frontend
+      run: |
+        cd frontend
+        npm test --if-present
+
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm run build
+      env:
+        CI: false
+
+    # Upload frontend build artifacts
+    - name: Upload frontend build
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-build
+        path: frontend/dist/
+        retention-days: 1
+
+  # Deploy to VPS Job (only on master/main branch)
+  deploy:
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Download frontend build
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-build
+        path: frontend/dist/
+
+    # Deploy to VPS via SSH
+    - name: Deploy to VPS
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        port: ${{ secrets.VPS_PORT || 22 }}
+        source: "frontend/dist/*"
+        target: "/home/chat"
+
+    - name: Deploy backend via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        port: ${{ secrets.VPS_PORT || 22 }}
+        script: |
+          # Navigate to backend directory
+          cd /home/chat/backend || exit 1
+          
+          # Pull latest code
+          git pull origin master
+          
+          # Install backend dependencies
+          npm ci --production
+          
+          # Build backend if necessary
+          npm run build --if-present
+          
+          # Restart backend service
+          pm2 restart backend || pm2 start src/index.js --name backend
+
+    # Health check after deployment
+    - name: Health check
+      run: |
+        sleep 30
+        curl -f ${{ secrets.APP_URL }}/health || curl -f ${{ secrets.APP_URL }} || exit 1
