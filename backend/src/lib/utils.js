@@ -7,8 +7,8 @@ export const generateToken = (userId, res) => {
 
   res.cookie("jwt", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",       // chỉ HTTPS trong production
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",   // cho phép cross-site trong production
+    secure: process.env.NODE_ENV === "staging",       // chỉ HTTPS trong production
+    sameSite: process.env.NODE_ENV === "staging" ? "none" : "lax",   // cho phép cross-site trong production
     maxAge: 7 * 24 * 60 * 60 * 1000
   });
 
