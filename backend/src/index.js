@@ -1,5 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
+
+dotenv.config();
+
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
@@ -15,9 +18,9 @@ import postRoutes from "./routes/post.route.js";
 import notificationRoutes from "./routes/notification.route.js";
 import cacheRoutes from "./routes/cache.route.js";
 import streamRoutes from "./routes/stream.route.js";
+import metricsRoutes, { metricsMiddleware } from "./middleware/metrics.middleware.js";
 import { app, server } from "./lib/socket.js";
 
-dotenv.config();
 
 const PORT = process.env.PORT;
 const __dirname = path.resolve();
@@ -27,6 +30,7 @@ const parsedOrigins = (process.env.CORS_ORIGINS || "")
   .map((o) => o.trim())
   .filter(Boolean);
 
+const defaultOrigins = ["http://localhost:5173", "http://localhost:3000"];
 const allowedOrigins = parsedOrigins.length ? parsedOrigins : defaultOrigins;
 
 // Increase payload limit for image uploads (50MB)
@@ -40,6 +44,9 @@ app.use(
   })
 );
 
+// Add metrics middleware
+app.use(metricsMiddleware);
+
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/groups", groupRoutes);
@@ -47,6 +54,9 @@ app.use("/api/posts", postRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/cache", cacheRoutes);
 app.use("/api/stream", streamRoutes);
+
+// Metrics and health endpoints
+app.use("/", metricsRoutes);
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));

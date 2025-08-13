@@ -15,6 +15,7 @@ const parsedOrigins = (process.env.CORS_ORIGINS || "")
   .split(",")
   .map((o) => o.trim())
   .filter(Boolean);
+const defaultOrigins = ["http://localhost:5173", "http://localhost:3000"];
 
 const allowedOrigins = parsedOrigins.length ? parsedOrigins : defaultOrigins;
 

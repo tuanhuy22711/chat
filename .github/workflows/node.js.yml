@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
-          path: frontend/dist
+          path: frontend/dist/
           retention-days: 1
 
   deploy:
@@ -52,20 +52,21 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: frontend-dist
-          path: frontend/dist
+          path: ./dist
 
-      - name: Copy dist to VPS
+      - name: Copy dist to VPS (overwrite only dist)
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || '22' }}
-          source: "frontend/dist/*"
-          target: "/home/chat/frontend"
+          source: "./dist/*"
+          target: "/home/chat/frontend/dist"
+          strip_components: 1
           rm: true
 
-      - name: SSH to VPS and update code
+      - name: SSH to VPS and update backend
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -73,20 +74,24 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || '22' }}
           script: |
-            cd /home/chat/backend
-
-            # Nếu chưa clone thì clone
-            if [ ! -d ".git" ]; then
-              git clone https://github.com/<your-user>/<your-repo>.git /home/chat
+            # Nếu chưa clone thì clone, nếu có rồi thì pull
+            if [ ! -d "/home/chat/.git" ]; then
+              rm -rf /home/chat
+              git clone https://github.com/tuanhuy22711/chat.git
             else
+              cd /home/chat
+              git reset --hard
               git pull
             fi
 
-            cd backend
-            npm ci
+            cd /home/chat/backend
+            npm ci --production
 
             sudo npm install -g pm2
-            pm2 stop all || true
-            pm2 start src/index.js --name "backend" 
+            pm2 stop backend || true
+            pm2 delete backend || true
+            pm2 start src/index.js --name "backend"
+
+            pm2 save
 
             echo "✅ Deployment completed!"

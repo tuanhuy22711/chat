@@ -1,7 +1,11 @@
 import dotenv from 'dotenv';
 import { createClient } from 'redis';
+import path from 'path';
 
-dotenv.config();
+// Load .env file from the backend directory
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const envPath = path.resolve(__dirname, '../../.env');
+dotenv.config({ path: envPath });
 
 // Redis client configuration
 const client = createClient(
@@ -11,8 +15,8 @@ const client = createClient(
             username: process.env.REDIS_USERNAME || 'default',
             password: process.env.REDIS_PASSWORD,
             socket: {
-                host: process.env.REDIS_HOST,
-                port: Number(process.env.REDIS_PORT)
+                host: process.env.REDIS_HOST || 'localhost',
+                port: parseInt(process.env.REDIS_PORT) || 6379
             }
         }
 );

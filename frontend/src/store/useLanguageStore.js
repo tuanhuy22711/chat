@@ -11,7 +11,7 @@ const translations = {
 export const useLanguageStore = create(
   persist(
     (set, get) => ({
-      language: "en", // default language
+      language: "en", 
       translations: translations,
 
       setLanguage: (lang) => {
