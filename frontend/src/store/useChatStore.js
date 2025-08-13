@@ -58,10 +58,21 @@ export const useChatStore = create((set, get) => ({
     const socket = useAuthStore.getState().socket;
 
     socket.on("newMessage", (newMessage) => {
+      console.log("Received new message:", newMessage);
+      
       // Check if message is part of current conversation
+      const senderIdToCheck = newMessage.senderId?._id || newMessage.senderId;
+      const receiverIdToCheck = newMessage.receiverId?._id || newMessage.receiverId;
+      
       const isMessageFromConversation = 
-        (newMessage.senderId._id === selectedUser._id) || 
-        (newMessage.receiverId === selectedUser._id);
+        (senderIdToCheck === selectedUser._id) || 
+        (receiverIdToCheck === selectedUser._id);
+        
+      console.log("Is message from conversation:", isMessageFromConversation, {
+        senderIdToCheck,
+        receiverIdToCheck,
+        selectedUserId: selectedUser._id
+      });
         
       if (!isMessageFromConversation) return;
 

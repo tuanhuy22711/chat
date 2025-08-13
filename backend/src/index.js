@@ -14,6 +14,7 @@ import groupRoutes from "./routes/group.route.js";
 import postRoutes from "./routes/post.route.js";
 import notificationRoutes from "./routes/notification.route.js";
 import cacheRoutes from "./routes/cache.route.js";
+import streamRoutes from "./routes/stream.route.js";
 import { app, server } from "./lib/socket.js";
 
 dotenv.config();
@@ -43,6 +44,7 @@ app.use("/api/groups", groupRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/cache", cacheRoutes);
+app.use("/api/stream", streamRoutes);
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));

@@ -54,11 +54,10 @@ const ChatContainer = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col h-full">
       <ChatHeader />
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[70vh]">
-        {messages.map((message) => (
+      <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4 max-h-[calc(100vh-140px)] sm:max-h-[70vh]">{messages.map((message) => (
           <div
             key={message._id}
             className={`chat ${(message.senderId._id || message.senderId) === authUser._id ? "chat-end" : "chat-start"}`}
@@ -88,10 +87,10 @@ const ChatContainer = () => {
                 <img
                   src={message.image}
                   alt="Attachment"
-                  className="sm:max-w-[200px] rounded-md mb-2"
+                  className="max-w-[150px] sm:max-w-[200px] rounded-md mb-2"
                 />
               )}
-              {message.text && <p>{message.text}</p>}
+              {message.text && <p className="text-sm sm:text-base">{message.text}</p>}
             </div>
             <MessageStatus message={message} />
           </div>

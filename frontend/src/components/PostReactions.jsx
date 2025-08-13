@@ -48,7 +48,7 @@ const PostReactions = ({ post, showButtons = false }) => {
           onClick={() => setShowReactionPicker(!showReactionPicker)}
           onMouseEnter={() => setShowReactionPicker(true)}
           onMouseLeave={() => setShowReactionPicker(false)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+          className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors text-sm sm:text-base ${
             userReaction
               ? `${reactionIcons[userReaction.type]?.color} bg-base-200`
               : "hover:bg-base-200"
@@ -58,14 +58,14 @@ const PostReactions = ({ post, showButtons = false }) => {
             <>
               {(() => {
                 const ReactionIcon = reactionIcons[userReaction.type]?.icon || ThumbsUp;
-                return <ReactionIcon size={18} />;
+                return <ReactionIcon size={16} className="sm:w-[18px] sm:h-[18px]" />;
               })()}
-              <span className="capitalize">{userReaction.type}</span>
+              <span className="capitalize hidden xs:inline sm:inline">{userReaction.type}</span>
             </>
           ) : (
             <>
-              <ThumbsUp size={18} />
-              <span>Like</span>
+              <ThumbsUp size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <span className="hidden xs:inline sm:inline">Like</span>
             </>
           )}
         </button>
@@ -73,7 +73,7 @@ const PostReactions = ({ post, showButtons = false }) => {
         {/* Reaction Picker */}
         {showReactionPicker && (
           <div
-            className="absolute bottom-full left-0 mb-2 bg-base-100 border border-base-300 rounded-full shadow-lg p-2 flex gap-1 z-10"
+            className="absolute bottom-full left-0 mb-2 bg-base-100 border border-base-300 rounded-full shadow-lg p-1 sm:p-2 flex gap-0.5 sm:gap-1 z-10"
             onMouseEnter={() => setShowReactionPicker(true)}
             onMouseLeave={() => setShowReactionPicker(false)}
           >
@@ -81,10 +81,10 @@ const PostReactions = ({ post, showButtons = false }) => {
               <button
                 key={type}
                 onClick={() => handleReaction(type)}
-                className={`p-2 rounded-full hover:scale-125 transition-transform ${color}`}
+                className={`p-1.5 sm:p-2 rounded-full hover:scale-110 sm:hover:scale-125 transition-transform ${color} touch-manipulation`}
                 title={type}
               >
-                <Icon size={20} />
+                <Icon size={18} className="sm:w-5 sm:h-5" />
               </button>
             ))}
           </div>
@@ -102,24 +102,24 @@ const PostReactions = ({ post, showButtons = false }) => {
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1 sm:gap-2">
       {/* Reaction Icons */}
-      <div className="flex -space-x-1">
+      <div className="flex -space-x-0.5 sm:-space-x-1">
         {topReactions.map(([type]) => {
           const { icon: Icon, bgColor } = reactionIcons[type];
           return (
             <div
               key={type}
-              className={`w-5 h-5 ${bgColor} rounded-full flex items-center justify-center border border-white`}
+              className={`w-4 h-4 sm:w-5 sm:h-5 ${bgColor} rounded-full flex items-center justify-center border border-white`}
             >
-              <Icon size={12} className="text-white" />
+              <Icon size={10} className="sm:w-3 sm:h-3 text-white" />
             </div>
           );
         })}
       </div>
 
       {/* Reaction Count */}
-      <span className="text-sm text-base-content/60">
+      <span className="text-xs sm:text-sm text-base-content/60">
         {totalReactions}
       </span>
     </div>

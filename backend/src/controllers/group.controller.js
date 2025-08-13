@@ -170,15 +170,15 @@ export const sendGroupMessage = async (req, res) => {
     
     group.members.forEach((member) => {
       const memberId = member.user.toString();
+      const socketId = getReceiverSocketId(memberId);
       
-      // Skip sender
+      if (socketId) {
+        // Send to all members including sender for consistency
+        io.to(socketId).emit("newGroupMessage", populatedMessage);
+      }
+      
+      // Create notification for each member (except sender)
       if (memberId !== senderId.toString()) {
-        const socketId = getReceiverSocketId(memberId);
-        if (socketId) {
-          io.to(socketId).emit("newGroupMessage", populatedMessage);
-        }
-        
-        // Create notification for each member (except sender)
         notificationPromises.push(
           createNotification({
             recipient: memberId,

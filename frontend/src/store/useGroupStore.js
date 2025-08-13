@@ -57,26 +57,31 @@ export const useGroupStore = create((set, get) => ({
 
   sendGroupMessage: async (groupId, messageData) => {
     const { groupMessages } = get();
+    const { authUser } = useAuthStore.getState();
     
     // Create optimistic message with temporary ID
     const tempId = `temp_${Date.now()}_${Math.random()}`;
     const optimisticMessage = {
       _id: tempId,
       ...messageData,
-      senderId: useAuthStore.getState().authUser,
+      senderId: authUser, // Use full authUser object
+      groupId: groupId,
+      messageType: "group",
       createdAt: new Date().toISOString(),
       isOptimistic: true,
     };
 
+    console.log("Adding optimistic message:", optimisticMessage);
     set({ groupMessages: [...groupMessages, optimisticMessage] });
 
     try {
       const res = await axiosInstance.post(`/groups/${groupId}/messages`, messageData);
+      console.log("Message sent successfully:", res.data);
       
-      // Remove optimistic message - real message will come via socket
+      // Replace optimistic message with real message from server
       set((state) => ({
-        groupMessages: state.groupMessages.filter(
-          (msg) => msg._id !== tempId
+        groupMessages: state.groupMessages.map(msg => 
+          msg._id === tempId ? res.data : msg
         ),
       }));
     } catch (error) {
@@ -149,12 +154,29 @@ export const useGroupStore = create((set, get) => ({
     if (!socket) return;
 
     socket.on("newGroupMessage", (message) => {
+      console.log("Received new group message:", message);
       const { selectedGroup, groupMessages } = get();
+      const { authUser } = useAuthStore.getState();
+      
       if (selectedGroup && message.groupId === selectedGroup._id) {
         // Check if message already exists to prevent duplicates
         const messageExists = groupMessages.some(msg => msg._id === message._id);
+        
         if (!messageExists) {
-          set({ groupMessages: [...groupMessages, message] });
+          console.log("Adding new group message to state");
+          
+          // If it's from current user, replace any optimistic message
+          if (message.senderId._id === authUser._id) {
+            set((state) => ({
+              groupMessages: [
+                ...state.groupMessages.filter(msg => !msg.isOptimistic),
+                message
+              ]
+            }));
+          } else {
+            // For other users, just add the message
+            set({ groupMessages: [...groupMessages, message] });
+          }
         }
       }
     });

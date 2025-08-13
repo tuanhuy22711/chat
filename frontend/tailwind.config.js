@@ -4,7 +4,26 @@ import daisyui from "daisyui";
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
-    extend: {},
+    extend: {
+      screens: {
+        'xs': '475px',
+      },
+      animation: {
+        'pulse-ring': 'pulse-ring 1.5s ease-out infinite',
+      },
+      keyframes: {
+        'pulse-ring': {
+          '0%': {
+            transform: 'scale(1)',
+            opacity: '1',
+          },
+          '100%': {
+            transform: 'scale(2)',
+            opacity: '0',
+          },
+        },
+      },
+    },
   },
   plugins: [daisyui],
   daisyui: {

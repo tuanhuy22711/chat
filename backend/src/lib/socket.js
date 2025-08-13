@@ -2,6 +2,8 @@ import { Server } from "socket.io";
 import http from "http";
 import express from "express";
 import { cache, CACHE_KEYS, CACHE_TTL } from "./redis.js";
+import Message from "../models/message.model.js";
+import User from "../models/user.model.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -157,6 +159,40 @@ io.on("connection", (socket) => {
         }
       }
     });
+  });
+
+  // Handle sending messages
+  socket.on("sendMessage", async (data) => {
+    try {
+      const { receiverId, text } = data;
+      const senderId = userId;
+      
+      // Create and save message to database
+      const newMessage = new Message({
+        senderId,
+        receiverId,
+        text
+      });
+      
+      await newMessage.save();
+      
+      // Populate sender information
+      await newMessage.populate("senderId", "fullName profilePic");
+      
+      const receiverSocketId = getReceiverSocketId(receiverId);
+      
+      if (receiverSocketId) {
+        // Send message to receiver
+        io.to(receiverSocketId).emit("newMessage", newMessage);
+      }
+      
+      // Also send back to sender for confirmation
+      socket.emit("newMessage", newMessage);
+      
+    } catch (error) {
+      console.error("Error sending message:", error);
+      socket.emit("messageError", { error: "Failed to send message" });
+    }
   });
 
   socket.on("disconnect", () => {

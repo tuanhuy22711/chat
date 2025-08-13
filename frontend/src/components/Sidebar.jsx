@@ -26,49 +26,48 @@ const Sidebar = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="border-b border-base-300 w-full p-5">
+      <div className="border-b border-base-300 w-full p-3 sm:p-5">
         <div className="flex items-center gap-2">
-          <Users className="size-6" />
-          <span className="font-medium">{t("nav.directMessages")}</span>
+          <Users className="w-5 h-5 sm:w-6 sm:h-6" />
+          <span className="font-medium text-sm sm:text-base">{t("nav.directMessages")}</span>
         </div>
         {/* TODO: Online filter toggle */}
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-2 sm:mt-3 flex items-center gap-2">
           <label className="cursor-pointer flex items-center gap-2">
             <input
               type="checkbox"
               checked={showOnlineOnly}
               onChange={(e) => setShowOnlineOnly(e.target.checked)}
-              className="checkbox checkbox-sm"
+              className="checkbox checkbox-xs sm:checkbox-sm"
             />
-            <span className="text-sm">{t("chat.showOnlineOnly")}</span>
+            <span className="text-xs sm:text-sm">{t("chat.showOnlineOnly")}</span>
           </label>
           <span className="text-xs text-zinc-500">({onlineUsers.length - 1} {t("chat.online").toLowerCase()})</span>
         </div>
       </div>
 
-      <div className="overflow-y-auto w-full py-3">
-        {filteredUsers.map((user) => (
+      <div className="overflow-y-auto w-full py-2 sm:py-3">{filteredUsers.map((user) => (
           <div
             key={user._id}
             className={`
-              w-full p-3 flex items-center gap-3 group
+              w-full p-2 sm:p-3 flex items-center gap-2 sm:gap-3 group
               hover:bg-base-300 transition-colors
               ${selectedUser?._id === user._id ? "bg-base-300 ring-1 ring-base-300" : ""}
             `}
           >
             <button
               onClick={() => setSelectedUser(user)}
-              className="flex items-center gap-3 flex-1 min-w-0"
+              className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0"
             >
               <div className="relative">
                 <Avatar 
                   src={user.profilePic}
                   name={user.fullName}
-                  size="size-12"
+                  size="size-10 sm:size-12"
                 />
                 {onlineUsers.includes(user._id) && (
                   <span
-                    className="absolute bottom-0 right-0 size-3 bg-green-500 
+                    className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 
                     rounded-full ring-2 ring-zinc-900"
                   />
                 )}
@@ -76,8 +75,8 @@ const Sidebar = () => {
 
               {/* User info */}
               <div className="text-left min-w-0">
-                <div className="font-medium truncate">{user.fullName}</div>
-                <div className="text-sm text-zinc-400">
+                <div className="font-medium truncate text-sm sm:text-base">{user.fullName}</div>
+                <div className="text-xs sm:text-sm text-zinc-400">
                   {onlineUsers.includes(user._id) ? t("chat.online") : t("chat.offline")}
                 </div>
               </div>
@@ -89,10 +88,10 @@ const Sidebar = () => {
                 e.stopPropagation();
                 navigate(`/profile/${user._id}`);
               }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-base-200 rounded-full"
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 sm:p-2 hover:bg-base-200 rounded-full"
               title="View Profile"
             >
-              <User size={16} />
+              <User size={14} className="sm:w-4 sm:h-4" />
             </button>
           </div>
         ))}

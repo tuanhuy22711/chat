@@ -34,6 +34,7 @@ const GroupChatContainer = () => {
   }, [selectedGroup, getGroupMessages, markGroupMessagesAsRead]);
 
   useEffect(() => {
+    // Subscribe to group messages whenever component mounts or socket changes
     subscribeToGroupMessages();
     return () => unsubscribeFromGroupMessages();
   }, [subscribeToGroupMessages, unsubscribeFromGroupMessages]);

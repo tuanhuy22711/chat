@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@stream-io/video-react-sdk": "^1.19.6",
     "axios": "^1.7.7",
     "emoji-picker-react": "^4.13.2",
     "lucide-react": "^0.459.0",
@@ -17,6 +18,7 @@
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.4.1",
     "react-router-dom": "^6.28.0",
+    "simple-peer": "^9.11.1",
     "socket.io-client": "^4.8.1",
     "zustand": "^5.0.7"
   },

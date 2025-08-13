@@ -8,6 +8,7 @@ import ProfilePage from "./pages/ProfilePage";
 import UserProfilePage from "./pages/UserProfilePage";
 import NewsfeedPage from "./pages/NewsfeedPage";
 import NotificationsPage from "./pages/NotificationsPage";
+import CallPage from "./pages/CallPage";
 
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./store/useAuthStore";
@@ -18,7 +19,7 @@ import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 
 const App = () => {
-  const { authUser, checkAuth, isCheckingAuth, onlineUsers } = useAuthStore();
+  const { authUser, checkAuth, isCheckingAuth, onlineUsers, socket } = useAuthStore();
   const { theme } = useThemeStore();
 
   console.log({ onlineUsers });
@@ -49,6 +50,7 @@ const App = () => {
         <Route path="/profile/:userId" element={authUser ? <UserProfilePage /> : <Navigate to="/login" />} />
         <Route path="/newsfeed" element={authUser ? <NewsfeedPage /> : <Navigate to="/login" />} />
         <Route path="/notifications" element={authUser ? <NotificationsPage /> : <Navigate to="/login" />} />
+        <Route path="/call/:callId" element={authUser ? <CallPage /> : <Navigate to="/login" />} />
       </Routes>
 
       <Toaster />
