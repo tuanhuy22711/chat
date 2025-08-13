@@ -15,7 +15,8 @@ const defaultOrigins = [
   "https://chat-zeta-murex.vercel.app",
   "https://bloggers-secretary-bones-donated.trycloudflare.com",
   "http://localhost:5173",
-  "https://ambassador-seasons-surrey-age.trycloudflare.com"
+  "https://ambassador-seasons-surrey-age.trycloudflare.com",
+  "http://47.236.3.65:5001"
 ];
 
 const parsedOrigins = (process.env.CORS_ORIGINS || "")
