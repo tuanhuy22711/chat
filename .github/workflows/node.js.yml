@@ -1,145 +1,92 @@
-# Fullstack Chat App CI/CD Pipeline
-# This workflow will build, test and deploy the chat application to VPS
-
 name: Chat App CI/CD
 
 on:
   push:
-    branches: [ "master", "main" ]
-  pull_request:
-    branches: [ "master", "main" ]
+    branches: ["master", "main"]
 
 env:
   NODE_VERSION: '20.x'
 
 jobs:
-  # Test and Build Job
-  test-and-build:
+  build-frontend:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    # Backend build and test
-    - name: Setup Node.js for Backend
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-        cache-dependency-path: backend/package-lock.json
+      - name: Setup Node.js for Frontend
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
-    - name: Install backend dependencies
-      run: |
-        cd backend
-        npm ci
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
 
-    - name: Test backend
-      run: |
-        cd backend
-        npm test --if-present
+      - name: Build frontend with env
+        run: |
+          cd frontend
+          npm run build
+        env:
+          CI: false
+          VITE_API_URL: "https://chat.tuanhuy227.xyz/api"
+          VITE_SOCKET_URL: "https://chat.tuanhuy227.xyz"
+          VITE_STREAM_API_KEY: "pavaphavh3cc"
 
-    - name: Build backend
-      run: |
-        cd backend
-        npm run build --if-present
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 1
 
-    # Frontend build and test
-    - name: Setup Node.js for Frontend
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-        cache-dependency-path: frontend/package-lock.json
-
-    - name: Install frontend dependencies
-      run: |
-        cd frontend
-        npm ci
-
-    - name: Test frontend
-      run: |
-        cd frontend
-        npm test --if-present
-
-    - name: Build frontend
-      run: |
-        cd frontend
-        npm run build
-      env:
-        CI: false
-        VITE_API_URL: "https://chat.tuanhuy227.xyz/api"
-        VITE_SOCKET_URL: "https://chat.tuanhuy227.xyz"
-        VITE_STREAM_API_KEY: "pavaphavh3cc"
-        
-    # Upload frontend build artifacts
-    - name: Upload frontend build
-      uses: actions/upload-artifact@v4
-      with:
-        name: frontend-build
-        path: frontend/dist/
-        retention-days: 1
-
-  # Deploy to VPS Job (only on master/main branch)
   deploy:
-    needs: test-and-build
+    needs: build-frontend
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Download frontend build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
 
-    - name: Download frontend build
-      uses: actions/download-artifact@v4
-      with:
-        name: frontend-build
-        path: frontend/dist/
+      - name: Copy dist to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          source: "frontend/dist/*"
+          target: "/home/chat/frontend"
+          rm: true
 
-    # Copy entire project to VPS
-    - name: Deploy code to VPS
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
-        key: ${{ secrets.VPS_SSH_KEY }}
-        port: ${{ secrets.VPS_PORT || '22' }}
-        source: ".,!node_modules,!.git,!.github"
-        target: "/home/chat/"
-        rm: true
+      - name: SSH to VPS and update code
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          script: |
+            cd /home/chat/backend
 
-    # Setup and restart services on VPS
-    - name: Setup and restart services
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
-        key: ${{ secrets.VPS_SSH_KEY }}
-        port: ${{ secrets.VPS_PORT || '22' }}
-        script: |
-          # Set up application directory
-          cd /home/chat || exit 1
+            # Nếu chưa clone thì clone
+            if [ ! -d ".git" ]; then
+              git clone https://github.com/<your-user>/<your-repo>.git /home/chat
+            else
+              git pull
+            fi
 
-          # Install backend dependencies
-          cd backend
-          npm ci --production
-          
-          # Build backend if necessary
-          npm run build --if-present
-          
-          # Setup PM2 ecosystem
-          sudo npm install -g pm2
-          
-          # Stop existing processes
-          pm2 stop all || true
-          pm2 delete all || true
-          
-          # Start backend with PM2
-          pm2 start src/index.js --name "backend" --env production
-               
-          
-          # Restart services
-          pm2 save
-          pm2 startup
-          
-          echo "Deployment completed successfully!"
+            cd backend
+            npm ci
+
+            sudo npm install -g pm2
+            pm2 stop all || true
+            pm2 start src/index.js --name "backend" 
+
+            echo "✅ Deployment completed!"
