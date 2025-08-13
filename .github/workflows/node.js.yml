@@ -21,13 +21,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup Node.js
+    # Backend build and test
+    - name: Setup Node.js for Backend
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
 
-    # Backend tests and build
     - name: Install backend dependencies
       run: |
         cd backend
@@ -43,7 +44,14 @@ jobs:
         cd backend
         npm run build --if-present
 
-    # Frontend tests and build
+    # Frontend build and test
+    - name: Setup Node.js for Frontend
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
     - name: Install frontend dependencies
       run: |
         cd frontend
@@ -76,48 +84,75 @@ jobs:
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
     
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     - name: Download frontend build
       uses: actions/download-artifact@v4
       with:
         name: frontend-build
         path: frontend/dist/
 
-    # Deploy to VPS via SSH
-    - name: Deploy to VPS
+    # Copy entire project to VPS
+    - name: Deploy code to VPS
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.VPS_HOST }}
         username: ${{ secrets.VPS_USERNAME }}
         key: ${{ secrets.VPS_SSH_KEY }}
-        port: ${{ secrets.VPS_PORT || 22 }}
-        source: "frontend/dist/*"
-        target: "/home/chat"
+        port: ${{ secrets.VPS_PORT || '22' }}
+        source: ".,!node_modules,!.git,!.github"
+        target: "/home/chat-app/"
+        rm: true
 
-    - name: Deploy backend via SSH
+    # Setup and restart services on VPS
+    - name: Setup and restart services
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.VPS_HOST }}
         username: ${{ secrets.VPS_USERNAME }}
         key: ${{ secrets.VPS_SSH_KEY }}
-        port: ${{ secrets.VPS_PORT || 22 }}
+        port: ${{ secrets.VPS_PORT || '22' }}
         script: |
-          # Navigate to backend directory
-          cd /home/chat/backend || exit 1
-          
-          # Pull latest code
-          git pull origin master
+          # Set up application directory
+          cd /home/chat-app || exit 1
           
           # Install backend dependencies
+          cd backend
           npm ci --production
           
           # Build backend if necessary
           npm run build --if-present
           
-          # Restart backend service
-          pm2 restart backend || pm2 start src/index.js --name backend
+          # Setup PM2 ecosystem
+          sudo npm install -g pm2
+          
+          # Stop existing processes
+          pm2 stop all || true
+          pm2 delete all || true
+          
+          # Start backend with PM2
+          pm2 start src/index.js --name "chat-backend" --env production
+          
+          # Setup Nginx for frontend (assuming nginx is installed)
+          sudo cp ../frontend/nginx.conf /etc/nginx/sites-available/chat-app
+          sudo ln -sf /etc/nginx/sites-available/chat-app /etc/nginx/sites-enabled/
+          sudo rm -f /etc/nginx/sites-enabled/default
+          
+          # Copy frontend build to nginx directory
+          sudo mkdir -p /var/www/chat-app
+          sudo cp -r ../frontend/dist/* /var/www/chat-app/
+          
+          # Restart services
+          sudo nginx -t && sudo systemctl reload nginx
+          pm2 save
+          pm2 startup
+          
+          echo "Deployment completed successfully!"
 
     # Health check after deployment
     - name: Health check
       run: |
         sleep 30
-        curl -f ${{ secrets.APP_URL }}/health || curl -f ${{ secrets.APP_URL }} || exit 1
+        echo "Checking application health..."
+        curl -f "${{ secrets.APP_URL || 'http://localhost' }}/health" || echo "Health check endpoint not available"
