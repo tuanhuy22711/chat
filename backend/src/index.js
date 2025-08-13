@@ -22,18 +22,27 @@ dotenv.config();
 const PORT = process.env.PORT;
 const __dirname = path.resolve();
 
+const defaultOrigins = [
+  "https://chat-zeta-murex.vercel.app",
+  "https://bloggers-secretary-bones-donated.trycloudflare.com",
+  "https://ambassador-seasons-surrey-age.trycloudflare.com",
+  "http://localhost:5173"
+];
+
+const parsedOrigins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+const allowedOrigins = parsedOrigins.length ? parsedOrigins : defaultOrigins;
+
 // Increase payload limit for image uploads (50MB)
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: [
-      "https://chat-zeta-murex.vercel.app",                 // FE trên Vercel
-      "https://bloggers-secretary-bones-donated.trycloudflare.com",
-      "https://ambassador-seasons-surrey-age.trycloudflare.com",
-      "http://localhost:5173" // Cloudflare Tunnel
-    ],
+    origin: allowedOrigins,
     credentials: true, // Cho phép gửi cookie/token
   })
 );

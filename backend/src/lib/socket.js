@@ -1,21 +1,33 @@
 import { Server } from "socket.io";
 import http from "http";
 import express from "express";
+import dotenv from "dotenv";
 import { cache, CACHE_KEYS, CACHE_TTL } from "./redis.js";
 import Message from "../models/message.model.js";
 import User from "../models/user.model.js";
 
+dotenv.config();
+
 const app = express();
 const server = http.createServer(app);
 
+const defaultOrigins = [
+  "https://chat-zeta-murex.vercel.app",
+  "https://bloggers-secretary-bones-donated.trycloudflare.com",
+  "http://localhost:5173",
+  "https://ambassador-seasons-surrey-age.trycloudflare.com"
+];
+
+const parsedOrigins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+const allowedOrigins = parsedOrigins.length ? parsedOrigins : defaultOrigins;
+
 const io = new Server(server, {
   cors: {
-     origin: [
-      "https://chat-zeta-murex.vercel.app",
-      "https://bloggers-secretary-bones-donated.trycloudflare.com",
-      "http://localhost:5173" ,
-      "https://ambassador-seasons-surrey-age.trycloudflare.com" // Added new origin
-    ],
+    origin: allowedOrigins,
     credentials: true,
   },
 });

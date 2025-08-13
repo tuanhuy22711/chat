@@ -24,6 +24,21 @@ CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
 
+# Redis (choose one style)
+# 1) Single URL style (recommended for Redis Cloud):
+REDIS_URL=redis://default:password@host:port
+
+# 2) Separate fields style:
+# REDIS_USERNAME=default
+# REDIS_PASSWORD=...
+# REDIS_HOST=...
+# REDIS_PORT=15228
+
+# Comma-separated list of allowed origins for CORS (Express & Socket.io)
+# Example:
+# CORS_ORIGINS=https://your-frontend.vercel.app,http://localhost:5173
+CORS_ORIGINS=
+
 NODE_ENV=development
 ```
 
