@@ -68,7 +68,10 @@ jobs:
         npm run build
       env:
         CI: false
-
+        VITE_API_URL: "https://chat.tuanhuy227.xyz/api"
+        VITE_SOCKET_URL: "https://chat.tuanhuy227.xyz"
+        VITE_STREAM_API_KEY: "pavaphavh3cc"
+        
     # Upload frontend build artifacts
     - name: Upload frontend build
       uses: actions/upload-artifact@v4
@@ -102,7 +105,7 @@ jobs:
         key: ${{ secrets.VPS_SSH_KEY }}
         port: ${{ secrets.VPS_PORT || '22' }}
         source: ".,!node_modules,!.git,!.github"
-        target: "/home/chat-app/"
+        target: "/home/chat/"
         rm: true
 
     # Setup and restart services on VPS
@@ -115,8 +118,8 @@ jobs:
         port: ${{ secrets.VPS_PORT || '22' }}
         script: |
           # Set up application directory
-          cd /home/chat-app || exit 1
-          
+          cd /home/chat || exit 1
+
           # Install backend dependencies
           cd backend
           npm ci --production
@@ -132,27 +135,11 @@ jobs:
           pm2 delete all || true
           
           # Start backend with PM2
-          pm2 start src/index.js --name "chat-backend" --env production
-          
-          # Setup Nginx for frontend (assuming nginx is installed)
-          sudo cp ../frontend/nginx.conf /etc/nginx/sites-available/chat-app
-          sudo ln -sf /etc/nginx/sites-available/chat-app /etc/nginx/sites-enabled/
-          sudo rm -f /etc/nginx/sites-enabled/default
-          
-          # Copy frontend build to nginx directory
-          sudo mkdir -p /var/www/chat-app
-          sudo cp -r ../frontend/dist/* /var/www/chat-app/
+          pm2 start src/index.js --name "backend" --env production
+               
           
           # Restart services
-          sudo nginx -t && sudo systemctl reload nginx
           pm2 save
           pm2 startup
           
           echo "Deployment completed successfully!"
-
-    # Health check after deployment
-    - name: Health check
-      run: |
-        sleep 30
-        echo "Checking application health..."
-        curl -f "${{ secrets.APP_URL || 'http://localhost' }}/health" || echo "Health check endpoint not available"
