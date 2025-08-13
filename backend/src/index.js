@@ -22,14 +22,6 @@ dotenv.config();
 const PORT = process.env.PORT;
 const __dirname = path.resolve();
 
-const defaultOrigins = [
-  "https://chat-zeta-murex.vercel.app",
-  "https://bloggers-secretary-bones-donated.trycloudflare.com",
-  "https://ambassador-seasons-surrey-age.trycloudflare.com",
-  "http://localhost:5173",
-  "http://47.236.3.65:5001"
-];
-
 const parsedOrigins = (process.env.CORS_ORIGINS || "")
   .split(",")
   .map((o) => o.trim())
