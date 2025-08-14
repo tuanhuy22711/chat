@@ -9,6 +9,7 @@ import UserProfilePage from "./pages/UserProfilePage";
 import NewsfeedPage from "./pages/NewsfeedPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import CallPage from "./pages/CallPage";
+import AIChatPage from "./pages/AIChatPage";
 
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./store/useAuthStore";
@@ -50,6 +51,7 @@ const App = () => {
         <Route path="/profile/:userId" element={authUser ? <UserProfilePage /> : <Navigate to="/login" />} />
         <Route path="/newsfeed" element={authUser ? <NewsfeedPage /> : <Navigate to="/login" />} />
         <Route path="/notifications" element={authUser ? <NotificationsPage /> : <Navigate to="/login" />} />
+        <Route path="/ai-chat" element={authUser ? <AIChatPage /> : <Navigate to="/login" />} />
         <Route path="/call/:callId" element={authUser ? <CallPage /> : <Navigate to="/login" />} />
       </Routes>
 

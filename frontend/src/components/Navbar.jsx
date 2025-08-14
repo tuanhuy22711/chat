@@ -3,7 +3,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useLanguageStore } from "../store/useLanguageStore";
 import LanguageSelector from "./LanguageSelector";
 import NotificationDropdown from "./NotificationDropdown";
-import { LogOut, MessageSquare, Settings, User, FileText } from "lucide-react";
+import { LogOut, MessageSquare, Settings, User, FileText, Bot } from "lucide-react";
 
 const Navbar = () => {
   const { logout, authUser } = useAuthStore();
@@ -39,6 +39,14 @@ const Navbar = () => {
             >
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">{t("nav.newsfeed") || "Newsfeed"}</span>
+            </Link>
+            
+            <Link
+              to={"/ai-chat"}
+              className="btn btn-sm gap-1 sm:gap-2 transition-colors"
+            >
+              <Bot className="w-4 h-4" />
+              <span className="hidden sm:inline">AI Chat</span>
             </Link>
             
             <Link

@@ -18,6 +18,7 @@ import postRoutes from "./routes/post.route.js";
 import notificationRoutes from "./routes/notification.route.js";
 import cacheRoutes from "./routes/cache.route.js";
 import streamRoutes from "./routes/stream.route.js";
+import aiChatRoutes from "./routes/aiChat.route.js";
 import metricsRoutes, { metricsMiddleware } from "./middleware/metrics.middleware.js";
 import { app, server } from "./lib/socket.js";
 
@@ -54,6 +55,7 @@ app.use("/api/posts", postRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/cache", cacheRoutes);
 app.use("/api/stream", streamRoutes);
+app.use("/api/ai", aiChatRoutes);
 
 // Metrics and health endpoints
 app.use("/", metricsRoutes);

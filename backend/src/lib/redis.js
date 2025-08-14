@@ -130,7 +130,9 @@ export const CACHE_KEYS = {
     UNREAD_COUNT: (userId) => `unread:count:${userId}`,
     ONLINE_USERS: 'online:users',
     POST: (postId) => `post:${postId}`,
-    USER_CONVERSATIONS: (userId) => `conversations:${userId}`
+    USER_CONVERSATIONS: (userId) => `conversations:${userId}`,
+    AI_CHAT_SESSIONS: (userId) => `ai_chat_sessions:${userId}`,
+    AI_CHAT_MESSAGES: (userId, sessionId) => `ai_chat_messages:${userId}:${sessionId}`,
 };
 
 // Cache TTL constants (in seconds)
