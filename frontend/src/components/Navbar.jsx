@@ -3,7 +3,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useLanguageStore } from "../store/useLanguageStore";
 import LanguageSelector from "./LanguageSelector";
 import NotificationDropdown from "./NotificationDropdown";
-import { LogOut, MessageSquare, Settings, User, FileText, Bot } from "lucide-react";
+import { LogOut, MessageSquare, Settings, User, FileText, Bot, Link2 } from "lucide-react";
 
 const Navbar = () => {
   const { logout, authUser } = useAuthStore();
@@ -30,35 +30,43 @@ const Navbar = () => {
               <LanguageSelector />
             </div>
             
-            {/* Notifications */}
-            {authUser && <NotificationDropdown />}
-            
-            <Link
-              to={"/newsfeed"}
-              className="btn btn-sm gap-1 sm:gap-2 transition-colors"
-            >
-              <FileText className="w-4 h-4" />
-              <span className="hidden sm:inline">{t("nav.newsfeed") || "Newsfeed"}</span>
-            </Link>
-            
-            <Link
-              to={"/ai-chat"}
-              className="btn btn-sm gap-1 sm:gap-2 transition-colors"
-            >
-              <Bot className="w-4 h-4" />
-              <span className="hidden sm:inline">AI Chat</span>
-            </Link>
-            
-            <Link
-              to={"/settings"}
-              className="btn btn-sm gap-1 sm:gap-2 transition-colors"
-            >
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">{t("nav.settings")}</span>
-            </Link>
-
             {authUser && (
               <>
+                {/* Notifications */}
+                <NotificationDropdown />
+                
+                <Link
+                  to={"/newsfeed"}
+                  className="btn btn-sm gap-1 sm:gap-2 transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span className="hidden sm:inline">{t("nav.newsfeed") || "Newsfeed"}</span>
+                </Link>
+                
+                <Link
+                  to={"/ai-chat"}
+                  className="btn btn-sm gap-1 sm:gap-2 transition-colors"
+                >
+                  <Bot className="w-4 h-4" />
+                  <span className="hidden sm:inline">AI Chat</span>
+                </Link>
+                
+                <Link
+                  to={"/url-shortener"}
+                  className="btn btn-sm gap-1 sm:gap-2 transition-colors"
+                >
+                  <Link2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Rút Gọn Link</span>
+                </Link>
+                
+                <Link
+                  to={"/settings"}
+                  className="btn btn-sm gap-1 sm:gap-2 transition-colors"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span className="hidden sm:inline">{t("nav.settings")}</span>
+                </Link>
+
                 <Link to={"/profile"} className="btn btn-sm gap-1 sm:gap-2">
                   <User className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span className="hidden sm:inline">{t("nav.profile")}</span>

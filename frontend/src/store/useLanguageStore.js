@@ -11,7 +11,7 @@ const translations = {
 export const useLanguageStore = create(
   persist(
     (set, get) => ({
-      language: "en", 
+      language: "vi", // Changed from "en" to "vi" for Vietnamese default
       translations: translations,
 
       setLanguage: (lang) => {

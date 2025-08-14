@@ -10,6 +10,7 @@ import NewsfeedPage from "./pages/NewsfeedPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import CallPage from "./pages/CallPage";
 import AIChatPage from "./pages/AIChatPage";
+import UrlShortenerPage from "./pages/UrlShortenerPage";
 
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./store/useAuthStore";
@@ -40,7 +41,7 @@ const App = () => {
 
   return (
     <div data-theme={theme}>
-      <Navbar />
+      {authUser && <Navbar />}
 
       <Routes>
         <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
@@ -52,6 +53,7 @@ const App = () => {
         <Route path="/newsfeed" element={authUser ? <NewsfeedPage /> : <Navigate to="/login" />} />
         <Route path="/notifications" element={authUser ? <NotificationsPage /> : <Navigate to="/login" />} />
         <Route path="/ai-chat" element={authUser ? <AIChatPage /> : <Navigate to="/login" />} />
+        <Route path="/url-shortener" element={authUser ? <UrlShortenerPage /> : <Navigate to="/login" />} />
         <Route path="/call/:callId" element={authUser ? <CallPage /> : <Navigate to="/login" />} />
       </Routes>
 

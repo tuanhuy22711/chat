@@ -121,21 +121,19 @@ export const cache = {
 
 // Cache keys constants
 export const CACHE_KEYS = {
-    USER_PROFILE: (userId) => `user:profile:${userId}`,
-    USER_POSTS: (userId, page) => `user:posts:${userId}:page:${page}`,
-    NEWSFEED: (userId, page) => `newsfeed:${userId}:page:${page}`,
-    MESSAGES: (userId1, userId2) => `messages:${[userId1, userId2].sort().join(':')}`,
-    USERS_SIDEBAR: (userId) => `users:sidebar:${userId}`,
-    NOTIFICATIONS: (userId) => `notifications:${userId}`,
-    UNREAD_COUNT: (userId) => `unread:count:${userId}`,
-    ONLINE_USERS: 'online:users',
-    POST: (postId) => `post:${postId}`,
-    USER_CONVERSATIONS: (userId) => `conversations:${userId}`,
-    AI_CHAT_SESSIONS: (userId) => `ai_chat_sessions:${userId}`,
-    AI_CHAT_MESSAGES: (userId, sessionId) => `ai_chat_messages:${userId}:${sessionId}`,
-};
-
-// Cache TTL constants (in seconds)
+  USER_SESSIONS: (userId) => `user_sessions:${userId}`,
+  MESSAGE_HISTORY: (chatId) => `messages:${chatId}`,
+  USER_PROFILE: (userId) => `profile:${userId}`,
+  USERS_SIDEBAR: (userId) => `users_sidebar:${userId}`,
+  NOTIFICATIONS: (userId) => `notifications:${userId}`,
+  NEWSFEED: (userId, page = 1) => `newsfeed:${userId}:page:${page}`,
+  MESSAGES: (userId, otherUserId) => `messages:${userId}:${otherUserId}`,   
+  ONLINE_USERS: 'online_users',
+  AI_CHAT_SESSIONS: (userId) => `ai_chat_sessions:${userId}`,
+  AI_CHAT_MESSAGES: (userId, sessionId) => `ai_chat_messages:${userId}:${sessionId}`,
+  SHORT_URL: (shortCode) => `short_url:${shortCode}`,
+  USER_SHORT_URLS: (userId) => `user_short_urls:${userId}`,
+};// Cache TTL constants (in seconds)
 export const CACHE_TTL = {
     SHORT: 60,        // 1 minute
     MEDIUM: 300,      // 5 minutes  
